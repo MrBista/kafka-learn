@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kafka Deep Dive - Core Concepts</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .concept-card {
+            background: white;
+            border-radius: 20px;
+            margin: 30px 0;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border-left: 8px solid #3498db;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .card-content {
+            padding: 40px;
+        }
+
+        .analogy-section {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 5px solid #ff9800;
+        }
+
+        .real-world-example {
+            background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 5px solid #4caf50;
+        }
+
+        .technical-detail {
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 5px solid #9c27b0;
+        }
+
+        .visual-demo {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .demo-element {
+            display: inline-block;
+            margin: 10px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .demo-element:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .producer-demo {
+            background: linear-gradient(135deg, #4fc3f7, #29b6f6);
+            color: white;
+        }
+
+        .topic-demo {
+            background: linear-gradient(135deg, #ff7043, #f4511e);
+            color: white;
+        }
+
+        .partition-demo {
+            background: linear-gradient(135deg, #ffb74d, #ffa726);
+            color: white;
+            font-size: 0.9em;
+            margin: 5px;
+            padding: 10px 15px;
+        }
+
+        .consumer-demo {
+            background: linear-gradient(135deg, #81c784, #66bb6a);
+            color: white;
+        }
+
+        .flow-arrow {
+            font-size: 2em;
+            color: #3498db;
+            margin: 0 15px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(10px); }
+        }
+
+        .scenario-box {
+            border: 3px dashed #3498db;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        .step-by-step {
+            counter-reset: step-counter;
+        }
+
+        .step {
+            counter-increment: step-counter;
+            position: relative;
+            background: white;
+            border-radius: 10px;
+            padding: 20px 20px 20px 60px;
+            margin: 15px 0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .step::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #3498db;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .comparison-table th {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .interactive-section {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            border-left: 5px solid #2196f3;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .result-box {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+            min-height: 80px;
+            border: 2px solid #3498db;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #f39c12;
+        }
+
+        .code-snippet {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .card-content { padding: 20px; }
+            .demo-element { margin: 5px; padding: 10px 15px; }
+            .flow-arrow { display: block; transform: rotate(90deg); margin: 10px 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- CONCEPT 1: PRODUCER -->
+        <div class="concept-card">
+            <div class="card-header">
+                <h1>🚀 CONCEPT 1: PRODUCER</h1>
+                <p>Siapa yang mengirim data ke Kafka?</p>
+            </div>
+            <div class="card-content">
+                
+                <div class="analogy-section">
+                    <h3>🏭 Analogi: Pabrik Mainan</h3>
+                    <p><strong>Producer</strong> = Mesin pembuat mainan di pabrik</p>
+                    <p><strong>Mainan</strong> = Data/Message yang diproduksi</p>
+                    <p><strong>Conveyor Belt</strong> = Kafka Topic</p>
+                    <p><strong>Kotak Penyimpanan</strong> = Partition</p>
+                    
+                    <div class="scenario-box">
+                        <p><strong>Scenario:</strong> Pabrik mainan punya 3 mesin (Producer) yang produksi mainan berbeda:</p>
+                        <ul>
+                            <li>Mesin A → Mobil mainan → Belt "toy-cars"</li>
+                            <li>Mesin B → Boneka → Belt "dolls"</li>
+                            <li>Mesin C → Puzzle → Belt "puzzles"</li>
+                        </ul>
+                        <p>Setiap mesin tidak perlu tahu siapa yang akan ambil mainannya nanti!</p>
+                    </div>
+                </div>
+
+                <div class="real-world-example">
+                    <h3>🌍 Real-World Examples:</h3>
+                    <div class="step-by-step">
+                        <div class="step">
+                            <strong>E-commerce Order Service:</strong><br/>
+                            Setiap ada customer checkout → produce message ke topic "orders"
+                        </div>
+                        <div class="step">
+                            <strong>IoT Sensor:</strong><br/>
+                            Sensor suhu kirim data setiap 5 detik → topic "temperature-readings"
+                        </div>
+                        <div class="step">
+                            <strong>Web Application Logs:</strong><br/>
+                            Setiap user action (click, login, logout) → topic "user-activities"
+                        </div>
+                        <div class="step">
+                            <strong>Payment Gateway:</strong><br/>
+                            Setiap transaksi berhasil/gagal → topic "payment-events"
+                        </div>
+                    </div>
+                </div>
+
+                <div class="technical-detail">
+                    <h3>⚙️ Technical Details:</h3>
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Aspect</th>
+                                <th>Explanation</th>
+                                <th>Example</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Fire and Forget</strong></td>
+                                <td>Producer kirim data, langsung lanjut kerja lain</td>
+                                <td>Kirim log, tidak perlu tunggu konfirmasi</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Acknowledgment</strong></td>
+                                <td>Producer tunggu konfirmasi dari Kafka</td>
+                                <td>Payment data harus confirmed tersimpan</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Batching</strong></td>
+                                <td>Kumpulkan beberapa messages, kirim sekaligus</td>
+                                <td>100 log messages dijadikan 1 batch</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="visual-demo">
+                    <h3>Visual Demo: Producer in Action</h3>
+                    <div style="margin: 30px 0;">
+                        <div class="producer-demo">📱 Mobile App</div>
+                        <span class="flow-arrow">→</span>
+                        <div class="producer-demo">🌐 API Gateway</div>
+                        <span class="flow-arrow">→</span>
+                        <div class="producer-demo">📤 Order Service<br/>(Producer)</div>
+                        <span class="flow-arrow">→</span>
+                        <div class="topic-demo">📬 orders topic</div>
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <h4>❗ Common Pitfalls untuk Producer:</h4>
+                    <ul>
+                        <li><strong>Message terlalu besar:</strong> Default max 1MB per message</li>
+                        <li><strong>Tidak handle error:</strong> Network issue, Kafka down, etc.</li>
+                        <li><strong>Key selection salah:</strong> Hot partition problem</li>
+                        <li><strong>Serialization issue:</strong> Data format tidak konsisten</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONCEPT 2: TOPIC & PARTITIONS -->
+        <div class="concept-card">
+            <div class="card-header">
+                <h1>📚 CONCEPT 2: TOPICS & PARTITIONS</h1>
+                <p>Dimana data disimpan dan bagaimana diorganisir?</p>
+            </div>
+            <div class="card-content">
+                
+                <div class="analogy-section">
+                    <h3>🏪 Analogi: Supermarket dengan Multiple Kasir</h3>
+                    <p><strong>Topic</strong> = Kategori produk (Groceries, Electronics, Clothes)</p>
+                    <p><strong>Partition</strong> = Kasir yang berbeda dalam kategori yang sama</p>
+                    <p><strong>Message</strong> = Customer dengan keranjang belanja</p>
+                    <p><strong>Key</strong> = VIP card number (customer dengan card sama selalu ke kasir yang sama)</p>
+                    
+                    <div class="scenario-box">
+                        <p><strong>Scenario Supermarket:</strong></p>
+                        <div class="step-by-step">
+                            <div class="step">Customer datang dengan keranjang groceries</div>
+                            <div class="step">Kalau punya VIP card → ke kasir khusus berdasarkan card number</div>
+                            <div class="step">Kalau tidak punya VIP card → ke kasir mana saja yang available</div>
+                            <div class="step">Setiap kasir melayani customers secara berurutan (FIFO)</div>
+                            <div class="step">Kasir berbeda bisa kerja parallel (tidak saling tunggu)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="visual-demo">
+                    <h3>Visual: Topic "user-events" dengan 3 Partitions</h3>
+                    <div style="background: white; padding: 25px; border-radius: 15px; margin: 20px 0;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <div class="topic-demo" style="font-size: 1.3em;">📬 Topic: user-events</div>
+                        </div>
+                        
+                        <div id="partitionDemo" style="display: flex; flex-direction: column; gap: 15px;">
+                            <div style="display: flex; align-items: center; background: #f8f9fa; padding: 15px; border-radius: 10px;">
+                                <div class="partition-demo">Partition 0</div>
+                                <div style="flex: 1; margin-left: 15px;" id="partition0">
+                                    <span style="background: #3498db; color: white; padding: 5px 10px; margin: 2px; border-radius: 5px; font-size: 0.8em;">user123:login</span>
+                                    <span style="background: #3498db; color: white; padding: 5px 10px; margin: 2px; border-radius: 5px; font-size: 0.8em;">user456:purchase</span>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; background: #f8f9fa; padding: 15px; border-radius: 10px;">
+                                <div class="partition-demo">Partition 1</div>
+                                <div style="flex: 1; margin-left: 15px;" id="partition1">
+                                    <span style="background: #e74c3c; color: white; padding: 5px 10px; margin: 2px; border-radius: 5px; font-size: 0.8em;">user789:login</span>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; background: #f8f9fa; padding: 15px; border-radius: 10px;">
+                                <div class="partition-demo">Partition 2</div>
+                                <div style="flex: 1; margin-left: 15px;" id="partition2">
+                                    <span style="background: #27ae60; color: white; padding: 5px 10px; margin: 2px; border-radius: 5px; font-size: 0.8em;">user111:logout</span>
+                                    <span style="background: #27ae60; color: white; padding: 5px 10px; margin: 2px; border-radius: 5px; font-size: 0.8em;">user123:logout</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3>🎮 Interactive Demo: Message Distribution</h3>
+                    <p>Coba kirim messages dan lihat bagaimana Kafka mendistribusikan ke partitions:</p>
+                    <div style="margin: 20px 0;">
+                        <button class="btn" onclick="sendMessage('user123', 'login')">Send: user123 login</button>
+                        <button class="btn" onclick="sendMessage('user456', 'purchase')">Send: user456 purchase</button>
+                        <button class="btn" onclick="sendMessage('user789', 'logout')">Send: user789 logout</button>
+                        <button class="btn" onclick="sendMessage('user111', 'view')">Send: user111 view</button>
+                        <button class="btn" onclick="sendMessage('', 'anonymous')">Send: no key</button>
+                    </div>
+                    <div class="result-box" id="messageResult">
+                        Klik tombol untuk mengirim message dan lihat ke partition mana message tersebut dikirim!
+                    </div>
+                </div>
+
+                <div class="real-world-example">
+                    <h3>🎯 Kenapa Butuh Multiple Partitions?</h3>
+                    
+                    <div class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Aspect</th>
+                                <th>1 Partition</th>
+                                <th>Multiple Partitions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Throughput</strong></td>
+                                <td>1000 msg/second</td>
+                                <td>3000+ msg/second (3x faster)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Parallel Processing</strong></td>
+                                <td>Tidak bisa</td>
+                                <td>Bisa (1 consumer per partition)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Ordering</strong></td>
+                                <td>Global ordering</td>
+                                <td>Per-partition ordering</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Fault Tolerance</strong></td>
+                                <td>Single point of failure</td>
+                                <td>Distributed, more resilient</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="technical-detail">
+                    <h3>⚡ Partition Selection Strategy:</h3>
+                    <div class="step-by-step">
+                        <div class="step">
+                            <strong>Dengan Key:</strong> hash(key) % partition_count<br/>
+                            <span class="highlight">user123 → hash → 67 → 67 % 3 = Partition 1</span>
+                        </div>
+                        <div class="step">
+                            <strong>Tanpa Key:</strong> Round-robin atau sticky partitioning<br/>
+                            <span class="highlight">msg1→P0, msg2→P1, msg3→P2, msg4→P0...</span>
+                        </div>
+                        <div class="step">
+                            <strong>Custom Partitioner:</strong> Logic sendiri<br/>
+                            <span class="highlight">VIP users → P0, Regular users → P1,P2</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <h4>⚠️ Partition Design Considerations:</h4>
+                    <ul>
+                        <li><strong>Hot Partitions:</strong> Key distribution tidak merata → 1 partition overloaded</li>
+                        <li><strong>Too Many Partitions:</strong> Overhead management, slow rebalancing</li>
+                        <li><strong>Too Few Partitions:</strong> Limited parallelism, throughput bottleneck</li>
+                        <li><strong>Can't Reduce:</strong> Bisa tambah partition, tapi tidak bisa kurangi!</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONCEPT 3: CONSUMER & CONSUMER GROUPS -->
+        <div class="concept-card">
+            <div class="card-header">
+                <h1>🎯 CONCEPT 3: CONSUMER & CONSUMER GROUPS</h1>
+                <p>Siapa yang membaca data dan bagaimana mereka berkoordinasi?</p>
+            </div>
+            <div class="card-content">
+                
+                <div class="analogy-section">
+                    <h3>📰 Analogi: Surat Kabar & Tim Redaksi</h3>
+                    <p><strong>Topic</strong> = Surat kabar harian (The Daily News)</p>
+                    <p><strong>Partitions</strong> = Halaman berbeda (Sports, Politics, Business)</p>
+                    <p><strong>Consumer Group</strong> = Tim redaksi berbeda</p>
+                    <p><strong>Consumer</strong> = Journalist individual dalam tim</p>
+                    
+                    <div class="scenario-box">
+                        <p><strong>Scenario Redaksi:</strong></p>
+                        <div class="step-by-step">
+                            <div class="step"><strong>Tim Marketing:</strong> Butuh baca semua halaman untuk analisis trending topics</div>
+                            <div class="step"><strong>Tim Translate:</strong> Butuh baca semua halaman untuk translate ke bahasa lain</div>
+                            <div class="step"><strong>Tim Archive:</strong> Butuh baca semua halaman untuk simpan ke database</div>
+                        </div>
+                        <p>✨ <strong>Key Point:</strong> Setiap tim dapat copy lengkap surat kabar yang sama!</p>
+                        
+                        <h4>Dalam 1 Tim (Consumer Group):</h4>
+                        <div class="step-by-step">
+                            <div class="step">Journalist A → baca halaman Sports</div>
+                            <div class="step">Journalist B → baca halaman Politics</div>
+                            <div class="step">Journalist C → baca halaman Business</div>
+                        </div>
+                        <p>✨ <strong>Key Point:</strong> Dalam 1 tim, setiap journalist baca halaman berbeda (no overlap)!</p>
+                    </div>
+                </div>
+
+                <div class="visual-demo">
+                    <h3>Visual: Consumer Groups in Action</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0;">
+                        
+                        <!-- Topic Representation -->
+                        <div style="background: white; padding: 20px; border-radius: 15px; text-align: center;">
+                            <div class="topic-demo" style="margin-bottom: 15px;">📬 Topic: orders</div>
+                            <div style="display: flex; justify-content: center; gap: 5px;">
+                                <div class="partition-demo">P0</div>
+                                <div class="partition-demo">P1</div>
+                                <div class="partition-demo">P2</div>
+                            </div>
+                        </div>
+
+                        <!-- Consumer Group 1 -->
+                        <div style="background: white; padding: 20px; border-radius: 15px; text-align: center;">
+                            <h4 style="color: #e74c3c;">👥 Group: payment-team</h4>
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                                <div class="consumer-demo" style="font-size: 0.9em;">Consumer A → P0</div>
+                                <div class="consumer-demo" style="font-size: 0.9em;">Consumer B → P1</div>
+                                <div class="consumer-demo" style="font-size: 0.9em;">Consumer C → P2</div>
+                            </div>
+                            <p style="font-size: 0.8em; color: #666; margin-top: 10px;">Load balanced, each consumer gets different partitions</p>
+                        </div>
+
+                        <!-- Consumer Group 2 -->
+                        <div style="background: white; padding: 20px; border-radius: 15px; text-align: center;">
+                            <h4 style="color: #27ae60;">👥 Group: analytics-team</h4>
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                                <div class="consumer-demo" style="font-size: 0.9em;">Consumer X → P0,P1,P2</div>
+                            </div>
+                            <p style="font-size: 0.8em; color: #666; margin-top: 10px;">Single consumer reads all partitions</p>
+                        </div>
+
+                        <!-- Consumer Group 3 -->
+                        <div style="background: white; padding: 20px; border-radius: 15px; text-align: center;">
+                            <h4 style="color: #8e44ad;">👥 Group: email-team</h4>
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                                <div class="consumer-demo" style="font-size: 0.9em;">Consumer Y → P0,P1</div>
+                                <div class="consumer-demo" style="font-size: 0.9em;">Consumer Z → P2</div>
+                            </div>
+                            <p style="font-size: 0.8em; color: #666; margin-top: 10px;">2 consumers, auto-balanced partitions</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3>🎮 Interactive Demo: Consumer Group Rebalancing</h3>
+                    <p>Simulasi apa yang terjadi ketika consumer join/leave group:</p>
+                    
+                    <div style="margin: 20px 0;">
+                        <h4>Consumer Group: analytics-team</h4>
+                        <div id="consumerGroup" style="background: white; padding: 20px; border-radius: 10px; margin: 10px 0;">
+                            <div style="display: flex; justify-content: space-around; align-items: center;">
+                                <div>
+                                    <strong>Partitions:</strong><br/>
+                                    <div class="partition-demo">P0</div>
+                                    <div class="partition-demo">P1</div>
+                                    <div class="partition-demo">P2</div>
+                                </div>
+                                <div id="consumerList">
+                                    <strong>Consumers:</strong><br/>
+                                    <div class="consumer-demo">C1 → P0,P1,P2</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <button class="btn" onclick="addConsumer()">Add Consumer</button>
+                            <button class="btn" onclick="removeConsumer()">Remove Consumer</button>
+                            <button class="btn" onclick="resetConsumers()">Reset</button>
+                        </div>
+                        
+                        <div class="result-box" id="rebalanceResult">
+                            Klik "Add Consumer" atau "Remove Consumer" untuk melihat rebalancing!
+                        </div>
+                    </div>
+                </div>
+
+                <div class="real-world-example">
+                    <h3>🌍 Real-World Consumer Group Patterns:</h3>
+                    
+                    <div class="step-by-step">
+                        <div class="step">
+                            <strong>Scaling Pattern:</strong><br/>
+                            Start: 1 consumer handle 3 partitions (slow)<br/>
+                            Scale: Add 2 more consumers → each handle 1 partition (3x faster)
+                        </div>
+                        <div class="step">
+                            <strong>Fault Tolerance:</strong><br/>
+                            Consumer C2 crash → partitions automatically redistributed ke C1 & C3
+                        </div>
+                        <div class="step">
+                            <strong>Multiple Teams:</strong><br/>
+                            Payment team, Email team, Analytics team → semua baca data yang sama
+                        </div>
+                        <div class="step">
+                            <strong>Processing Guarantee:</strong><br/>
+                            Each message processed exactly once per consumer group
+                        </div>
+                    </div>
+                </div>
+
+                <div class="technical-detail">
+                    <h3>⚙️ Consumer Group Coordinator:</h3>
+                    <p>Kafka punya built-in coordinator yang handle:</p>
+                    <ul style="margin: 20px 0;">
+                        <li><strong>Member Management:</strong> Track consumers join/leave group</li>
+                        <li><strong>Partition Assignment:</strong> Decide which consumer gets which partitions</li>
+                        <li><strong>Rebalancing:</strong> Redistribute partitions when topology changes</li>
+                        <li><strong>Offset Management:</strong> Track reading progress per consumer group</li>
+                    </ul>
+                    
+                    <div class="code-snippet">
+Consumer Group Rebalancing Process:
+1. Consumer joins/leaves group
+2. Coordinator triggers rebalance
+3. All consumers stop consuming
+4. New partition assignment calculated
+5. Consumers resume with new assignments
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <h4>⚠️ Consumer Group Best Practices:</h4>
+                    <ul>
+                        <li><strong>Max Consumers = Partitions:</strong> Lebih dari ini = idle consumers</li>
+                        <li><strong>Commit Strategy:</strong> Auto-commit vs manual commit trade-offs</li>
+                        <li><strong>Rebalance Overhead:</strong> Frequent join/leave = performance impact</li>
+                        <li><strong>Consumer Lag Monitoring:</strong> Track processing delays</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONCEPT 4: OFFSETS -->
+        <div class="concept-card">
+            <div class="card-header">
+                <h1>📖 CONCEPT 4: OFFSETS</h1>
+                <p>Bagaimana Kafka track posisi reading dan enable replay?</p>
+            </div>
+            <div class="card-content">
+                
+                <div class="analogy-section">
+                    <h3>📚 Analogi: Bookmark dalam Buku</h3>
+                    <p><strong>Partition</strong> = Buku yang berbeda</p>
+                    <p><strong>Message</strong> = Halaman dalam buku</p>
+                    <p><strong>Offset</strong> = Nomor halaman bookmark</p>
+                    <p><strong>Consumer Group</strong> = Pembaca yang berbeda</p>
+                    
+                    <div class="scenario-box">
+                        <p><strong>Scenario Perpustakaan:</strong></p>
+                        <div class="step-by-step">
+                            <div class="step">Ada 3 buku: "Java Programming", "System Design", "Database"</div>
+                            <div class="step">Student A (analytics group): Java buku hal 50, System Design hal 23, Database hal 78</div>
+                            <div class="step">Student B (report group): Java buku hal 12, System Design hal 45, Database hal 34</div>
+                            <div class="step">Setiap student punya bookmark terpisah untuk setiap buku</div>
+                            <div class="step">Student bisa skip ke halaman sebelumnya jika perlu review</div>
+                        </div>
+                        <p>✨ <strong>Key Point:</strong> Setiap pembaca track progress sendiri untuk setiap buku!</p>
+                    </div>
+                </div>
+
+                <div class="visual-demo">
+                    <h3>Visual: Offset Management</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin: 20px 0;">
+                        
+                        <!-- Partition with Messages -->
+                        <div style="background: white; padding: 25px; border-radius: 15px;">
+                            <h4 style="text-align: center; color: #2c3e50;">Partition 0: user-events</h4>
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin: 15px 0;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="background: #95a5a6; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold;">0</span>
+                                    <span style="background: #ecf0f1; padding: 8px 12px; border-radius: 5px; flex: 1;">user123:login</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="background: #95a5a6; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold;">1</span>
+                                    <span style="background: #ecf0f1; padding: 8px 12px; border-radius: 5px; flex: 1;">user456:purchase</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="background: #e74c3c; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold;">2</span>
+                                    <span style="background: #fff3cd; padding: 8px 12px; border-radius: 5px; flex: 1;">user789:logout ← Current</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="background: #bdc3c7; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold;">3</span>
+                                    <span style="background: #f8f9fa; padding: 8px 12px; border-radius: 5px; flex: 1;">user111:view</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="background: #bdc3c7; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold;">4</span>
+                                    <span style="background: #f8f9fa; padding: 8px 12px; border-radius: 5px; flex: 1;">user123:logout</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Consumer Groups Offsets -->
+                        <div style="background: white; padding: 25px; border-radius: 15px;">
+                            <h4 style="text-align: center; color: #2c3e50;">Consumer Group Offsets</h4>
+                            
+                            <div style="margin: 20px 0;">
+                                <div style="background: #e8f5e8; padding: 15px; border-radius: 10px; margin: 10px 0;">
+                                    <strong style="color: #27ae60;">👥 analytics-team</strong><br/>
+                                    <span style="font-size: 0.9em;">Partition 0: Offset 5 (read all)</span><br/>
+                                    <span style="font-size: 0.9em;">Partition 1: Offset 3</span><br/>
+                                    <span style="font-size: 0.9em;">Partition 2: Offset 2</span>
+                                </div>
+                                
+                                <div style="background: #fff3e0; padding: 15px; border-radius: 10px; margin: 10px 0;">
+                                    <strong style="color: #f39c12;">👥 notification-team</strong><br/>
+                                    <span style="font-size: 0.9em;">Partition 0: Offset 2 (behind)</span><br/>
+                                    <span style="font-size: 0.9em;">Partition 1: Offset 1</span><br/>
+                                    <span style="font-size: 0.9em;">Partition 2: Offset 4</span>
+                                </div>
+
+                                <div style="background: #f3e5f5; padding: 15px; border-radius: 10px; margin: 10px 0;">
+                                    <strong style="color: #8e44ad;">👥 backup-team</strong><br/>
+                                    <span style="font-size: 0.9em;">Partition 0: Offset 0 (from beginning)</span><br/>
+                                    <span style="font-size: 0.9em;">Partition 1: Offset 0</span><br/>
+                                    <span style="font-size: 0.9em;">Partition 2: Offset 0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3>🎮 Interactive Demo: Offset Management</h3>
+                    <div style="margin: 20px 0;">
+                        <p><strong>Scenario:</strong> Simulate consumer group reading messages</p>
+                        <div>
+                            <button class="btn" onclick="simulateRead('analytics')">Analytics Team Read Next</button>
+                            <button class="btn" onclick="simulateRead('notification')">Notification Team Read Next</button>
+                            <button class="btn" onclick="resetOffset('analytics')">Reset Analytics to Beginning</button>
+                            <button class="btn" onclick="resetOffset('notification')">Reset Notification to Beginning</button>
+                        </div>
+                        <div class="result-box" id="offsetResult">
+                            Klik tombol untuk melihat bagaimana offset berubah ketika consumer groups membaca messages!
+                        </div>
+                    </div>
+                </div>
+
+                <div class="real-world-example">
+                    <h3>🌍 Real-World Offset Use Cases:</h3>
+                    
+                    <div class="step-by-step">
+                        <div class="step">
+                            <strong>Crash Recovery:</strong><br/>
+                            Payment service crash → restart dari offset terakhir yang di-commit → no data loss
+                        </div>
+                        <div class="step">
+                            <strong>Replay for Bug Fixes:</strong><br/>
+                            Analytics code ada bug → reset offset ke 1 week ago → reprocess semua data
+                        </div>
+                        <div class="step">
+                            <strong>New Service Deployment:</strong><br/>
+                            Deploy recommendation service baru → set offset "earliest" → process historical data
+                        </div>
+                        <div class="step">
+                            <strong>A/B Testing:</strong><br/>
+                            Algorithm A starts from latest, Algorithm B starts from beginning → compare results
+                        </div>
+                    </div>
+                </div>
+
+                <div class="technical-detail">
+                    <h3>⚙️ Offset Commit Strategies:</h3>
+                    
+                    <div class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Strategy</th>
+                                <th>Pros</th>
+                                <th>Cons</th>
+                                <th>Use Case</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Auto-commit</strong></td>
+                                <td>Simple, automatic</td>
+                                <td>Possible message loss/duplication</td>
+                                <td>Logging, non-critical data</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Manual commit</strong></td>
+                                <td>Full control, exactly-once</td>
+                                <td>More complex, slower</td>
+                                <td>Financial data, critical processing</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Batch commit</strong></td>
+                                <td>Good performance</td>
+                                <td>Possible duplication on failure</td>
+                                <td>ETL pipelines</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="warning-box">
+                    <h4>⚠️ Offset Management Pitfalls:</h4>
+                    <ul>
+                        <li><strong>Commit Before Processing:</strong> Message loss if consumer crashes</li>
+                        <li><strong>No Commit After Processing:</strong> Duplicate processing on restart</li>
+                        <li><strong>Wrong Reset Strategy:</strong> Skip data atau duplicate processing</li>
+                        <li><strong>Consumer Lag:</strong> Offset tertinggal jauh dari latest message</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONCEPT 5: END-TO-END FLOW -->
+        <div class="concept-card">
+            <div class="card-header">
+                <h1>🔄 CONCEPT 5: END-TO-END MESSAGE FLOW</h1>
+                <p>Menggabungkan semua concepts dalam real-world scenario</p>
+            </div>
+            <div class="card-content">
+                
+                <div class="analogy-section">
+                    <h3>🏭 Analogi: Smart Factory Production Line</h3>
+                    <p>Bayangkan pabrik smartphone yang super modern:</p>
+                    
+                    <div class="scenario-box">
+                        <div class="step-by-step">
+                            <div class="step">
+                                <strong>Station 1 (Producer):</strong> Assembly line produksi smartphone<br/>
+                                → Setiap smartphone selesai = event "phone-completed"
+                            </div>
+                            <div class="step">
+                                <strong>Conveyor System (Topic + Partitions):</strong><br/>
+                                → 3 conveyor belt berdasarkan model: iPhone, Samsung, Pixel<br/>
+                                → Setiap belt punya barcode scanner (offset tracking)
+                            </div>
+                            <div class="step">
+                                <strong>Quality Team (Consumer Group 1):</strong><br/>
+                                → 3 inspectors, masing-masing handle 1 belt<br/>
+                                → Check kualitas produk, update database QC
+                            </div>
+                            <div class="step">
+                                <strong>Packaging Team (Consumer Group 2):</strong><br/>
+                                → 2 packers share semua belt<br/>
+                                → Pack products, update inventory system
+                            </div>
+                            <div class="step">
+                                <strong>Shipping Team (Consumer Group 3):</strong><br/>
+                                → 1 coordinator handle semua belt<br/>
+                                → Arrange shipping, notify customers
+                            </div>
+                        </div>
+                        
+                        <p>✨ <strong>Magic:</strong> 1 produk masuk, 3 teams berbeda process secara parallel dan independent!</p>
+                    </div>
+                </div>
+
+                <div class="visual-demo">
+                    <h3>Visual: Complete E-commerce Order Flow</h3>
+                    <div style="background: white; padding: 30px; border-radius: 15px; margin: 20px 0;">
+                        
+                        <!-- Step 1: Order Creation -->
+                        <div style="text-align: center; margin: 25px 0;">
+                            <h4 style="color: #2c3e50;">📱 Step 1: Customer Places Order</h4>
+                            <div style="display: flex; justify-content: center; align-items: center; margin: 20px 0;">
+                                <div style="background: #3498db; color: white; padding: 15px 25px; border-radius: 10px;">
+                                    🛒 Order Service<br/>(Producer)
+                                </div>
+                                <span class="flow-arrow">→</span>
+                                <div style="background: #f39c12; color: white; padding: 10px 15px; border-radius: 8px; font-size: 0.9em;">
+                                    Message:<br/>
+                                    order_id: 12345<br/>
+                                    user_id: john123<br/>
+                                    amount: $150
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Topic Distribution -->
+                        <div style="text-align: center; margin: 25px 0;">
+                            <h4 style="color: #2c3e50;">📬 Step 2: Message Distribution</h4>
+                            <div style="margin: 20px 0;">
+                                <div style="background: #e74c3c; color: white; padding: 15px; border-radius: 10px; display: inline-block;">
+                                    Topic: order-events
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: center; gap: 15px;">
+                                <div style="background: #ff7675; color: white; padding: 12px; border-radius: 8px; text-align: center;">
+                                    Partition 0<br/>
+                                    hash(john123) → P0
+                                </div>
+                                <div style="background: #fd79a8; color: white; padding: 12px; border-radius: 8px; text-align: center;">
+                                    Partition 1<br/>
+                                    (empty)
+                                </div>
+                                <div style="background: #fdcb6e; color: white; padding: 12px; border-radius: 8px; text-align: center;">
+                                    Partition 2<br/>
+                                    (empty)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Consumer Groups Processing -->
+                        <div style="text-align: center; margin: 25px 0;">
+                            <h4 style="color: #2c3e50;">👥 Step 3: Parallel Processing</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0;">
+                                
+                                <div style="background: #a8e6cf; padding: 20px; border-radius: 10px;">
+                                    <strong style="color: #00b894;">💳 Payment Team</strong><br/>
+                                    <div style="margin: 10px 0; font-size: 0.9em;">
+                                        Consumer reads P0<br/>
+                                        ✅ Process payment $150<br/>
+                                        ✅ Update offset to 1
+                                    </div>
+                                </div>
+
+                                <div style="background: #fab1a0; padding: 20px; border-radius: 10px;">
+                                    <strong style="color: #e17055;">📦 Inventory Team</strong><br/>
+                                    <div style="margin: 10px 0; font-size: 0.9em;">
+                                        Consumer reads P0<br/>
+                                        ✅ Reserve stock<br/>
+                                        ✅ Update offset to 1
+                                    </div>
+                                </div>
+
+                                <div style="background: #a29bfe; padding: 20px; border-radius: 10px;">
+                                    <strong style="color: #6c5ce7;">📧 Notification Team</strong><br/>
+                                    <div style="margin: 10px 0; font-size: 0.9em;">
+                                        Consumer reads P0<br/>
+                                        ✅ Send email confirmation<br/>
+                                        ✅ Update offset to 1
+                                    </div>
+                                </div>
+
+                                <div style="background: #fd79a8; padding: 20px; border-radius: 10px;">
+                                    <strong style="color: #e84393;">📊 Analytics Team</strong><br/>
+                                    <div style="margin: 10px 0; font-size: 0.9em;">
+                                        Consumer reads P0<br/>
+                                        ✅ Update metrics<br/>
+                                        ✅ Update offset to 1
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Results -->
+                        <div style="text-align: center; margin: 25px 0;">
+                            <h4 style="color: #2c3e50;">🎯 Step 4: Results</h4>
+                            <div style="background: #dff9fb; padding: 20px; border-radius: 10px; border-left: 5px solid #00cec9;">
+                                <p><strong>✨ Decoupled Processing:</strong> Order Service hanya kirim 1 message</p>
+                                <p><strong>⚡ Parallel Execution:</strong> 4 teams process simultaneously</p>
+                                <p><strong>🔄 Independent Scaling:</strong> Each team can scale independently</p>
+                                <p><strong>🛡️ Fault Tolerance:</strong> If 1 team fails, others continue</p>
+                                <p><strong>📝 Audit Trail:</strong> All events stored, can replay anytime</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="real-world-example">
+                    <h3>🌍 Production Considerations:</h3>
+                    
+                    <div class="step-by-step">
+                        <div class="step">
+                            <strong>Message Schema Evolution:</strong><br/>
+                            Order v1: {order_id, amount} → Order v2: {order_id, amount, tax, shipping}<br/>
+                            Backward compatibility using Avro/Protobuf schemas
+                        </div>
+                        <div class="step">
+                            <strong>Error Handling:</strong><br/>
+                            Payment service down → messages accumulate → consumer lag increases<br/>
+                            Dead Letter Topic untuk messages yang gagal diprocess berkali-kali
+                        </div>
+                        <div class="step">
+                            <strong>Monitoring & Alerting:</strong><br/>
+                            Track: Consumer lag, throughput, error rates, partition distribution<br/>
+                            Alert: Lag > threshold, consumer group unhealthy
+                        </div>
+                        <div class="step">
+                            <strong>Data Retention:</strong><br/>
+                            Orders: Keep 30 days for replay capability<br/>
+                            Logs: Keep 7 days for debugging<br/>
+                            Balance storage cost vs replay needs
+                        </div>
+                    </div>
+                </div>
+
+                <div class="technical-detail">
+                    <h3>🔧 Configuration Best Practices:</h3>
+                    
+                    <div class="code-snippet">
+# Producer Configuration
+acks=all                    # Wait for all replicas
+retries=MAX_INT            # Retry failed sends
+max.in.flight.requests=5   # Pipeline for performance
+compression.type=lz4       # Compress messages
+
+# Consumer Configuration
+enable.auto.commit=false   # Manual offset management
+max.poll.records=500      # Batch size per poll
+session.timeout.ms=30000  # Heartbeat timeout
+isolation.level=read_committed  # Transactional reads
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Message Distribution Simulation
+        let messageCounter = 0;
+        const partitions = [[], [], []];
+        
+        function sendMessage(userId, action) {
+            messageCounter++;
+            const message = userId ? `${userId}:${action}` : `msg${messageCounter}:${action}`;
+            
+            let partitionIndex;
+            if (userId) {
+                // Simple hash simulation
+                const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                partitionIndex = hash % 3;
+            } else {
+                // Round-robin for messages without key
+                partitionIndex = messageCounter % 3;
+            }
+            
+            partitions[partitionIndex].push(message);
+            
+            // Update visual
+            updatePartitionDisplay();
+            
+            const resultDiv = document.getElementById('messageResult');
+            resultDiv.innerHTML = `
+                <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 5px 0;">
+                    <strong>✅ Message Sent:</strong> ${message}<br/>
+                    <strong>🎯 Assigned to:</strong> Partition ${partitionIndex}<br/>
+                    <strong>🔍 Reason:</strong> ${userId ? `Hash(${userId}) % 3 = ${partitionIndex}` : `Round-robin → ${partitionIndex}`}<br/>
+                    <strong>⏰ Time:</strong> ${new Date().toLocaleTimeString()}
+                </div>
+                ${resultDiv.innerHTML}
+            `;
+        }
+        
+        function updatePartitionDisplay() {
+            for (let i = 0; i < 3; i++) {
+                const partitionDiv = document.getElementById(`partition${i}`);
+                if (partitionDiv) {
+                    partitionDiv.innerHTML = partitions[i].map(msg => 
+                        `<span style="background: #3498db; color: white; padding: 5px 10px; margin: 2px; border-radius: 5px; font-size: 0.8em;">${msg}</span>`
+                    ).join(' ');
+                }
+            }
+        }
+        
+        // Consumer Group Simulation
+        let consumers = ['C1'];
+        let assignments = {
+            'C1': ['P0', 'P1', 'P2']
+        };
+        
+        function addConsumer() {
+            const newConsumer = `C${consumers.length + 1}`;
+            consumers.push(newConsumer);
+            rebalancePartitions();
+            updateConsumerDisplay();
+            
+            document.getElementById('rebalanceResult').innerHTML = `
+                <div style="background: #e8f5e8; padding: 15px; border-radius: 8px;">
+                    <strong>🔄 Rebalancing Triggered!</strong><br/>
+                    Added ${newConsumer} → Partitions redistributed<br/>
+                    <strong>⏰ Time:</strong> ${new Date().toLocaleTimeString()}
+                </div>
+            `;
+        }
+        
+        function removeConsumer() {
+            if (consumers.length > 1) {
+                const removedConsumer = consumers.pop();
+                delete assignments[removedConsumer];
+                rebalancePartitions();
+                updateConsumerDisplay();
+                
+                document.getElementById('rebalanceResult').innerHTML = `
+                    <div style="background: #ffe8e8; padding: 15px; border-radius: 8px;">
+                        <strong>🔄 Rebalancing Triggered!</strong><br/>
+                        Removed ${removedConsumer} → Partitions redistributed<br/>
+                        <strong>⏰ Time:</strong> ${new Date().toLocaleTimeString()}
+                    </div>
+                `;
+            }
+        }
+        
+        function resetConsumers() {
+            consumers = ['C1'];
+            assignments = { 'C1': ['P0', 'P1', 'P2'] };
+            updateConsumerDisplay();
+            
+            document.getElementById('rebalanceResult').innerHTML = `
+                <div style="background: #e8f8ff; padding: 15px; border-radius: 8px;">
+                    <strong>🔄 Reset Complete!</strong><br/>
+                    Back to single consumer setup<br/>
+                    <strong>⏰ Time:</strong> ${new Date().toLocaleTimeString()}
+                </div>
+            `;
+        }
+        
+        function rebalancePartitions() {
+            const partitions = ['P0', 'P1', 'P2'];
+            const newAssignments = {};
+            
+            // Simple round-robin assignment
+            consumers.forEach((consumer, index) => {
+                newAssignments[consumer] = [];
+            });
+            
+            partitions.forEach((partition, index) => {
+                const consumerIndex = index % consumers.length;
+                const consumer = consumers[consumerIndex];
+                newAssignments[consumer].push(partition);
+            });
+            
+            assignments = newAssignments;
+        }
+        
+        function updateConsumerDisplay() {
+            const consumerListDiv = document.getElementById('consumerList');
+            const assignmentText = consumers.map(consumer => 
+                `<div class="consumer-demo" style="margin: 5px 0;">${consumer} → ${assignments[consumer].join(',')}</div>`
+            ).join('');
+            
+            consumerListDiv.innerHTML = `<strong>Consumers:</strong><br/>${assignmentText}`;
+        }
+        
+        // Offset Management Simulation
+        const offsets = {
+            analytics: { partition0: 2, partition1: 1, partition2: 3 },
+            notification: { partition0: 1, partition1: 0, partition2: 2 }
+        };
+        
+        const messages = [
+            ['user123:login', 'user456:purchase', 'user789:logout', 'user111:view', 'user123:logout'],
+            ['user456:login', 'user789:purchase', 'user111:logout'],
+            ['user111:login', 'user123:purchase', 'user456:logout', 'user789:view']
+        ];
+        
+        function simulateRead(groupName) {
+            const group = offsets[groupName];
+            let readSomething = false;
+            
+            for (let partition = 0; partition < 3; partition++) {
+                const partitionKey = `partition${partition}`;
+                const currentOffset = group[partitionKey];
+                const partitionMessages = messages[partition];
+                
+                if (currentOffset < partitionMessages.length) {
+                    group[partitionKey] = currentOffset + 1;
+                    readSomething = true;
+                    break; // Read from one partition at a time for demo
+                }
+            }
+            
+            updateOffsetDisplay(groupName, readSomething);
+        }
+        
+        function resetOffset(groupName) {
+            const group = offsets[groupName];
+            group.partition0 = 0;
+            group.partition1 = 0;
+            group.partition2 = 0;
+            
+            document.getElementById('offsetResult').innerHTML = `
+                <div style="background: #fff3e0; padding: 15px; border-radius: 8px;">
+                    <strong>🔄 Offset Reset!</strong><br/>
+                    ${groupName} team reset to beginning (offset 0 for all partitions)<br/>
+                    <strong>⏰ Time:</strong> ${new Date().toLocaleTimeString()}
+                </div>
+            `;
+        }
+        
+        function updateOffsetDisplay(groupName, readSomething) {
+            const group = offsets[groupName];
+            const resultDiv = document.getElementById('offsetResult');
+            
+            if (readSomething) {
+                resultDiv.innerHTML = `
+                    <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 5px 0;">
+                        <strong>📖 ${groupName} team read next message!</strong><br/>
+                        <strong>Current Offsets:</strong><br/>
+                        Partition 0: ${group.partition0} / ${messages[0].length}<br/>
+                        Partition 1: ${group.partition1} / ${messages[1].length}<br/>
+                        Partition 2: ${group.partition2} / ${messages[2].length}<br/>
+                        <strong>⏰ Time:</strong> ${new Date().toLocaleTimeString()}
+                    </div>
+                    ${resultDiv.innerHTML}
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin: 5px 0;">
+                        <strong>⚠️ No more messages to read!</strong><br/>
+                        ${groupName} team has caught up to latest offsets<br/>
+                        <strong>⏰ Time:</strong> ${new Date().toLocaleTimeString()}
+                    </div>
+                    ${resultDiv.innerHTML}
+                `;
+            }
+        }
+        
+        // Initialize displays
+        updatePartitionDisplay();
+        updateConsumerDisplay();
+    </script>
+</body>
+</html>
